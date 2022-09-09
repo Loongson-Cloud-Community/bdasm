@@ -14,6 +14,13 @@ void	crc32q() {
 			:[c]"=r"(crc64)
 			:"0"(crc64), [v]"r"(*p)
 	);
+#elif __loongarch__
+	asm volatile(
+			"crcc.w.d.w %0, %1, %0\n\t"
+			: "+r" (crc64)
+			: "r" (*p)
+			: "memory"
+	);
 #else
 	#error "Unknown Architecture"
 #endif
@@ -32,6 +39,13 @@ void crc32b() {
 			"crc32cb %w[c], %w[c], %w[v]"
 			:[c]"=r"(crc)
 			:"0"(crc), [v]"r"(*buf)
+	);
+#elif __loongarch__
+	asm volatile(
+			"crcc.w.b.w %0, %1, %0\n\t"
+			: "+r" (crc)
+			: "r" (*buf)
+			: "memory"
 	);
 #else
 	#error "Unknown Architecture"
@@ -52,6 +66,8 @@ void xchg() {
 	return (c & k_SSE4_2) ? &CRCUtil::ComputeCRC32_Accelerate : &CRCUtil::ComputeCRC32_Lookup;
 #elif __aarch64__
 	// TODO(xuxunzhi) check if processor support crrc32 instruction
+	return &CRCUtil::ComputeCRC32_Accelerate;
+#elif __loongarch__
 	return &CRCUtil::ComputeCRC32_Accelerate;
 #else
 	return &CRCUtil::ComputeCRC32_Lookup;
